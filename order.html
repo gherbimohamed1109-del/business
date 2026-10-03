@@ -27,14 +27,15 @@ const s=new URLSearchParams(location.search).get("s");
 const $=i=>document.getElementById(i);
 if(!s){$("box").innerHTML="<p>رابط غير صحيح</p>"}
 else{
- getDoc(doc(db,"stores",s)).then(d=>{if(d.exists())$("t").textContent=d.data().name}).catch(()=>{});
+ let store={};getDoc(doc(db,"stores",s)).then(d=>{if(d.exists()){store=d.data();$("t").textContent=store.name}}).catch(()=>{});
  $("b").onclick=async()=>{
   const n=$("n").value.trim(),i=$("i").value.trim(),q=parseInt($("q").value,10);
   if(!n||!i||!(q>=1)){$("m").textContent="أكمل الاسم والمنتج والكمية";return}
   $("b").disabled=true;
   try{
    await addDoc(collection(db,"users",s,"orders"),{name:n,phone:$("p").value.trim(),product:i,qty:q,address:$("a").value.trim(),status:"new",ts:serverTimestamp()});
-   $("box").innerHTML='<div style="font-size:48px">✅</div><h2>تم إرسال طلبك</h2><p>سنتواصل معك قريباً</p>';
+   const wa=store.wa?'<a href="https://wa.me/'+store.wa+'?text='+encodeURIComponent("مرحبا، أنا "+n+" وقد أرسلت طلب: "+i+" × "+q)+'" style="display:block;margin-top:14px;padding:13px;border-radius:12px;background:#25D366;color:#fff;text-decoration:none">💬 تواصل معنا عبر واتساب</a>':"";
+   $("box").innerHTML='<div style="font-size:48px">✅</div><h2>تم إرسال طلبك</h2><p>سنتواصل معك قريباً</p>'+wa;
   }catch(e){$("b").disabled=false;$("m").textContent="تعذر الإرسال، حاول مرة أخرى"}
  };
 }
