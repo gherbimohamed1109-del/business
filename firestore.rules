@@ -12,8 +12,13 @@ service cloud.firestore {
     }
 
     // العميل (بدون تسجيل دخول) يقدر ينشئ طلب فقط، ولا يقرأ شيئاً
+    // المنتجات يقرأها الجميع (لعرض المتجر)، والكتابة لصاحبها فقط
+    match /users/{uid}/products/{id} {
+      allow read: if true;
+    }
+
     match /users/{uid}/orders/{id} {
-      allow create: if request.resource.data.keys().hasOnly(['name','phone','product','qty','address','status','ts'])
+      allow create: if request.resource.data.keys().hasOnly(['name','phone','product','qty','address','status','ts','pc'])
         && request.resource.data.keys().hasAll(['name','phone','product','qty','address','status','ts'])
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
         && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
@@ -21,6 +26,7 @@ service cloud.firestore {
         && request.resource.data.address is string && request.resource.data.address.size() <= 300
         && request.resource.data.qty is int && request.resource.data.qty >= 1 && request.resource.data.qty <= 1000
         && request.resource.data.status == 'new'
+        && (!('pc' in request.resource.data) || (request.resource.data.pc is number && request.resource.data.pc >= 0 && request.resource.data.pc <= 10000000))
         && request.resource.data.ts == request.time;
     }
 
