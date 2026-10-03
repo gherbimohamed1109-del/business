@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اطلب الآن</title>
+<style>
+:root{--bg:#f4f5fa;--card:#fff;--tx:#1b1f2a;--mut:#6b7280;--pri:#4f46e5;--bd:#e5e7eb}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#181b24;--tx:#eef0f6;--mut:#9aa1b2;--pri:#818cf8;--bd:#2a2f3c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Tahoma,Arial,sans-serif}
+.w{max-width:480px;margin:0 auto;padding:20px}.c{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-top:6vh;text-align:center}
+input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;margin-bottom:10px}
+button{width:100%;font:inherit;border:0;border-radius:12px;padding:13px;background:var(--pri);color:#fff;cursor:pointer}
+button:disabled{opacity:.6}p{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="w"><div class="c" id="box"><div style="font-size:40px">🛍️</div><h2 id="t">اطلب الآن</h2><p>املأ البيانات وسنتواصل معك لتأكيد الطلب</p>
+<input id="n" placeholder="الاسم" maxlength="100"><input id="p" type="tel" placeholder="رقم الهاتف" maxlength="30"><input id="i" placeholder="المنتج" maxlength="200"><input id="q" type="number" min="1" max="1000" value="1" placeholder="الكمية"><textarea id="a" rows="2" placeholder="العنوان" maxlength="300"></textarea>
+<button id="b">إرسال الطلب</button><p id="m"></p></div></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,doc,getDoc,addDoc,collection,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {firebaseConfig} from "./firebase-config.js";
+const db=getFirestore(initializeApp(firebaseConfig));
+const s=new URLSearchParams(location.search).get("s");
+const $=i=>document.getElementById(i);
+if(!s){$("box").innerHTML="<p>رابط غير صحيح</p>"}
+else{
+ getDoc(doc(db,"stores",s)).then(d=>{if(d.exists())$("t").textContent=d.data().name}).catch(()=>{});
+ $("b").onclick=async()=>{
+  const n=$("n").value.trim(),i=$("i").value.trim(),q=parseInt($("q").value,10);
+  if(!n||!i||!(q>=1)){$("m").textContent="أكمل الاسم والمنتج والكمية";return}
+  $("b").disabled=true;
+  try{
+   await addDoc(collection(db,"users",s,"orders"),{name:n,phone:$("p").value.trim(),product:i,qty:q,address:$("a").value.trim(),status:"new",ts:serverTimestamp()});
+   $("box").innerHTML='<div style="font-size:48px">✅</div><h2>تم إرسال طلبك</h2><p>سنتواصل معك قريباً</p>';
+  }catch(e){$("b").disabled=false;$("m").textContent="تعذر الإرسال، حاول مرة أخرى"}
+ };
+}
+</script>
+</body>
+</html>
